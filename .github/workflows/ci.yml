@@ -1,0 +1,26 @@
+name: pipeline-ci
+on: [push, pull_request]
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Start stack
+        run: docker compose up -d --build postgres mock-api airflow-init airflow-scheduler
+      - name: Wait for Airflow scheduler
+        run: |
+          for i in $(seq 1 60); do
+            if docker compose exec -T airflow-scheduler airflow dags list | grep -q commerce_daily_pipeline; then break; fi
+            sleep 5
+          done
+      - name: Run complete DAG day
+        run: docker compose exec -T airflow-scheduler airflow dags test commerce_daily_pipeline 2025-03-01
+      - name: Verify idempotency and warehouse outputs
+        run: |
+          docker compose exec -T airflow-scheduler python -c 'from datetime import date; from app.pipeline import run_pipeline; run_pipeline(date(2025,3,1))'
+          docker compose exec -T postgres psql -U pipeline -d commerce -c "DO \$\$ DECLARE n int; BEGIN SELECT count(*) INTO n FROM warehouse.fact_orders WHERE date_key=20250301; IF n <> 5 THEN RAISE EXCEPTION 'expected 5 fact rows, got %', n; END IF; IF (SELECT count(*) FROM warehouse.fact_shipments) <> 2 THEN RAISE EXCEPTION 'shipment load mismatch'; END IF; END \$\$;"
+      - name: Unit tests
+        run: docker compose exec -T airflow-scheduler pytest -q
+      - if: always()
+        run: docker compose down -v
