@@ -6,6 +6,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+      - name: Configure test environment
+        run: |
+          cp .env.example .env
+          sed -i 's/replace-with-a-local-secret/ci_pipeline_pw/g; s/replace-with-a-different-local-secret/ci_role_pw/g; s/replace-with-a-strong-local-password/ci_admin_pw/g' .env
       - name: Start stack
         run: docker compose up -d --build postgres mock-api airflow-init airflow-scheduler
       - name: Wait for Airflow scheduler
