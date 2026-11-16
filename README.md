@@ -84,7 +84,3 @@ docker compose exec airflow-scheduler pytest -q
 `.env` is ignored by Git. Set unique local secrets there; never commit it. The source extractor role has read-only access to `source`; the warehouse loader and Airflow metadata roles are separate. Set a unique Airflow admin password. Use a secrets backend and a production-grade notification target before deployment. All personal identifiers stay in the source system; Parquet and warehouse copies retain only hashes/pseudonyms.
 
 The demo retains local Parquet indefinitely until removed. For a real deployment, define retention by data class and delete bronze files after the approved raw-retention window. Restrict access to the Docker volume and warehouse schemas; quarantine records may contain source fields and should have source-equivalent access controls. To reset this disposable environment, use `docker compose down -v` and then start it again.
-
-## Demo video and submission
-
-Record a 5–8 minute walkthrough showing a scheduled DAG run, a forced task failure and retry alert in logs, a bad row in quarantine, a date-range backfill, and the dashboard. For a failure demonstration, stop `mock-api`, trigger a logical date, confirm Airflow retries and logs `PIPELINE_ALERT`, then restart the service. For quarantine, trigger March 3 and inspect `ops.quarantine`; for a backfill, run the documented March 1–3 command. Push this project to a public GitHub repository and submit the repository and video links in the milestone form.
