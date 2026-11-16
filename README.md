@@ -43,6 +43,14 @@ Open Airflow at <http://localhost:8080> (username `admin`; password is `AIRFLOW_
 
 The seeded source rows are effective from 2025-01-01. For a first run, use `2025-03-01`; this day also has a sample shipment drop.
 
+Keep the role passwords in `.env` stable after the first database initialization. If they change while the `pgdata` volume exists, update the running PostgreSQL container environment and rotate the existing roles without deleting data:
+
+```powershell
+docker compose up -d --force-recreate postgres
+docker compose exec -T postgres sh /seed/rotate-roles.sh
+docker compose up -d
+```
+
 ## Backfills and file drops
 
 Use Airflow's DAG trigger form to set a logical date, or run a range from the scheduler container:

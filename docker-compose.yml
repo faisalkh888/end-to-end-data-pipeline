@@ -13,6 +13,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./sql/init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
       - ./sql/init.sql:/seed/init.sql:ro
+      - ./sql/rotate-roles.sql:/seed/rotate-roles.sql:ro
+      - ./sql/rotate-roles.sh:/seed/rotate-roles.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
